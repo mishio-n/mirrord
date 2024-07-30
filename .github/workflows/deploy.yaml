@@ -1,0 +1,44 @@
+name: Deploy pages
+
+on: push
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - name: Set up Japanaease environment
+        run: |
+          sudo locale-gen ja_JP.UTF-8
+          echo "LANG=ja_JP.UTF-8" >> $GITHUB_ENV
+          echo "LC_ALL=ja_JP.UTF-8" >> $GITHUB_ENV
+          sudo apt-get update
+          sudo apt-get install -y fonts-ipafont
+          fc-cache -fv
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
+      - name: PDF export
+        run: npm run export
+      - name: Remove old PDF
+        run: rm -f dist/slidev-export.pdf
+      - name: Copy PDF
+        run: cp slides-export.pdf dist/slidev-export.pdf
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
